@@ -1,5 +1,7 @@
+from cmath import nan
 from copy import copy
 from enum import Enum
+from operator import truediv
 
 import numpy as np
 import pyqtgraph as pg
@@ -342,6 +344,7 @@ class Processor:
         # Determining threshold
         if self.threshold_type is ProcessingConfiguration.ThresholdType.FIXED:
             threshold = self.fixed_threshold_level * np.ones(sweep.size)
+            print('threshold level', self.fixed_threshold_level)
         elif self.threshold_type is ProcessingConfiguration.ThresholdType.RECORDED:
             threshold = self.sc_used_threshold
         elif self.threshold_type is ProcessingConfiguration.ThresholdType.CFAR:
@@ -351,6 +354,11 @@ class Processor:
                 self.cfar_sensitivity,
                 self.cfar_one_sided,
             )
+        elif self.threshold_type is ProcessingConfiguration.ThresholdType.RMS:
+            threshold = nan  * np.ones(sweep.size)
+            #print('Normal threshold: ', np.max(threshold))
+            rms_threshod = True
+
         else:
             print("Unknown thresholding method")
 
@@ -361,6 +369,13 @@ class Processor:
             self.sweeps_since_mean = 0
             self.last_mean_sweep = self.current_mean_sweep.copy()
             self.current_mean_sweep *= 0
+            
+            if rms_threshod:
+                rms = np.sqrt(np.mean((np.array(self.last_mean_sweep)))**2)
+                #print('RMS threshold level', rms)
+                threshold = (1.5*rms) * np.ones(sweep.size)
+                print('RMS threshold: ', np.max(rms))
+
 
             # Find the first delay over threshold. Used in tank-level when monitoring changes
             # in the direct leakage.
@@ -446,6 +461,7 @@ class ProcessingConfiguration(et.configbase.ProcessingConfig):
         FIXED = "Fixed"
         RECORDED = "Recorded"
         CFAR = "CFAR"
+        RMS = "RMS"
 
     class PeakSorting(Enum):
         STRONGEST = "Strongest signal"
