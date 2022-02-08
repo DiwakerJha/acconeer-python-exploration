@@ -161,9 +161,30 @@ class Processor:
         self.history = np.roll(self.history, -1, axis=0)
         self.history[-1] = output_data
 
+        amps = [sweep for sweep in output_data][0]
+        
+        rms = np.sqrt(np.mean((np.array(amps))**2))
+        #pvr = np.divide(np.max(amps), np.min(amps))
+        
+        #rms, pvr = pv_rms(amps)        
+        
+        #print(np.shape(amps))
+        #rms = np.sqrt(np.mean((np.array(amps))**2))
+        #print('rms: ', rms)
+        threshold = 1.5 * rms
+        
         peak_ampls = [np.max(sweep) for sweep in output_data]
         peak_depths = [self.depths[np.argmax(sweep)] for sweep in output_data]
-        filtered_peak_depths = [d if a > 200 else None for d, a in zip(peak_depths, peak_ampls)]
+        filtered_peak_depths = [d if a > threshold else None for d, a in zip(peak_depths, peak_ampls)]
+
+        print("---")
+        print('rms: ', rms)
+        #print('max in amps', np.max(amps))
+        #print('min in amps', np.min(amps))
+        #print('pv: ', pvr)
+        print('Threshold: ', threshold)
+        print('Depth: ', filtered_peak_depths)
+        print("---")
 
         output = {
             "output_data": output_data,
